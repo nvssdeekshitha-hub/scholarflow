@@ -1,0 +1,135 @@
+/app/backend/seed_data.py                                                                                                     import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+from datetime import datetime, timezone, timedelta
+import uuid
+
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
+mongo_url = os.environ['MONGO_URL']
+client = AsyncIOMotorClient(mongo_url)
+db = client[os.environ['DB_NAME']]
+
+async def seed_postings():
+    # Clear existing postings
+    await db.postings.delete_many({})
+    
+    postings = [
+        {
+            "id": str(uuid.uuid4()),
+            "title": "Fulbright Scholarship Program",
+            "type": "scholarship",
+            "description": "The Fulbright Program offers grants for international educational exchange for students, scholars, teachers, professionals, scientists and artists. Founded by U.S. Senator J. William Fulbright in 1946, the Fulbright Program is considered one of the most prestigious award programs.",
+            "organization": "U.S. Department of State",
+            "deadline": (datetime.now(timezone.utc) + timedelta(days=60)).strftime("%Y-%m-%d"),
+            "requirements": [
+                "Bachelor's degree or equivalent",
+                "U.S. citizenship",
+                "Strong academic record (minimum GPA 3.5)",
+                "Demonstrated leadership potential"
+            ],
+            "amount": "Full tuition + Living stipend",
+            "location": "International",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "title": "Google Summer Internship 2026",
+            "type": "internship",
+            "description": "Join Google's world-class engineering team for a summer internship. Work on real projects that impact billions of users. Collaborate with talented engineers and learn from the best in the industry.",
+            "organization": "Google LLC",
+            "deadline": (datetime.now(timezone.utc) + timedelta(days=45)).strftime("%Y-%m-%d"),
+            "requirements": [
+                "Currently enrolled in Computer Science or related field",
+                "Proficiency in one or more programming languages",
+                "Strong problem-solving skills",
+                "Previous internship experience (preferred)"
+            ],
+            "amount": "$8,000/month + Housing",
+            "location": "Mountain View, CA",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "title": "Rhodes Scholarship",
+            "type": "scholarship",
+            "description": "The Rhodes Scholarship is the oldest and most celebrated international fellowship award. It provides all expenses for two or three years of study at the University of Oxford. The scholarship seeks excellence in intellect, character, leadership, and commitment to service.",
+            "organization": "Rhodes Trust",
+            "deadline": (datetime.now(timezone.utc) + timedelta(days=90)).strftime("%Y-%m-%d"),
+            "requirements": [
+                "Age 18-24",
+                "Exceptional academic achievement",
+                "Leadership qualities",
+                "Commitment to making a positive impact"
+            ],
+            "amount": "Full funding for Oxford University",
+            "location": "Oxford, UK",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "title": "Goldman Sachs Investment Banking Internship",
+            "type": "internship",
+            "description": "Our 10-week summer internship program offers hands-on experience in investment banking. Work alongside senior bankers on live deals, develop financial models, and contribute to pitch presentations for Fortune 500 clients.",
+            "organization": "Goldman Sachs",
+            "deadline": (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d"),
+            "requirements": [
+                "Pursuing Bachelor's or Master's in Finance, Economics, or related field",
+                "Strong analytical and quantitative skills",
+                "Excellent communication abilities",
+                "Interest in financial markets"
+            ],
+            "amount": "$15,000/month",
+            "location": "New York, NY",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "title": "Gates Cambridge Scholarship",
+            "type": "scholarship",
+            "description": "Funded by the Bill and Melinda Gates Foundation, this scholarship is awarded to outstanding applicants from countries outside the UK to pursue a full-time postgraduate degree in any subject at the University of Cambridge.",
+            "organization": "Gates Cambridge Trust",
+            "deadline": (datetime.now(timezone.utc) + timedelta(days=75)).strftime("%Y-%m-%d"),
+            "requirements": [
+                "Non-UK citizen",
+                "Outstanding intellectual ability",
+                "Leadership potential",
+                "Commitment to improving lives of others"
+            ],
+            "amount": "Full cost of study + Maintenance allowance",
+            "location": "Cambridge, UK",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "title": "Microsoft Research Internship",
+            "type": "internship",
+            "description": "Work alongside leading researchers and engineers at Microsoft Research. Contribute to cutting-edge projects in AI, machine learning, cloud computing, and more. Present your work at internal conferences.",
+            "organization": "Microsoft Corporation",
+            "deadline": (datetime.now(timezone.utc) + timedelta(days=50)).strftime("%Y-%m-%d"),
+            "requirements": [
+                "PhD student or recent graduate in Computer Science, AI, or related field",
+                "Published research papers (preferred)",
+                "Strong programming and mathematics background",
+                "Passion for innovation"
+            ],
+            "amount": "$9,500/month + Relocation assistance",
+            "location": "Redmond, WA",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+    ]
+    
+    await db.postings.insert_many(postings)
+    print(f"✓ Seeded {len(postings)} postings")
+
+async def main():
+    print("Starting database seeding...")
+    await seed_postings()
+    print("Database seeding completed!")
+    client.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())

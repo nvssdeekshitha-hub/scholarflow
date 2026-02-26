@@ -1,0 +1,334 @@
+/app/frontend/src/pages/Profile.js                                                                                   import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Plus, Trash2, Save } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const Profile = () => {
+  const { getAuthHeader, user } = useAuth();
+  const [profile, setProfile] = useState({
+    education: [],
+    skills: [],
+    bio: '',
+    address: ''
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [newSkill, setNewSkill] = useState('');
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axios.get(`${API}/profile`, {
+        headers: getAuthHeader()
+      });
+      setProfile(response.data);
+    } catch (error) {
+      toast.error('Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await axios.post(`${API}/profile`, profile, {
+        headers: getAuthHeader()
+      });
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addEducation = () => {
+    setProfile({
+      ...profile,
+      education: [
+        ...profile.education,
+        { institution: '', degree: '', field: '', start_date: '', end_date: '', gpa: '' }
+      ]
+    });
+  };
+
+  const removeEducation = (index) => {
+    setProfile({
+      ...profile,
+      education: profile.education.filter((_, i) => i !== index)
+    });
+  };
+
+  const updateEducation = (index, field, value) => {
+    const updated = [...profile.education];
+    updated[index][field] = value;
+    setProfile({ ...profile, education: updated });
+  };
+
+  const addSkill = () => {
+    if (newSkill.trim()) {
+      setProfile({
+        ...profile,
+        skills: [...profile.skills, newSkill.trim()]
+      });
+      setNewSkill('');
+    }
+  };
+
+  const removeSkill = (index) => {
+    setProfile({
+      ...profile,
+      skills: profile.skills.filter((_, i) => i !== index)
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-slate-600 font-sans">Loading profile...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-stone-50 p-6 md:p-12">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-slate-900 mb-2">
+            My Profile
+          </h1>
+          <p className="text-slate-600 font-sans text-lg">Manage your academic and professional information</p>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm mb-6"
+        >
+          <h2 className="font-serif text-2xl font-bold text-slate-900 mb-6">Personal Information</h2>
+
+          <div className="space-y-5 mb-8">
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                Bio
+              </label>
+              <textarea
+                data-testid="profile-bio-input"
+                value={profile.bio || ''}
+                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                rows={4}
+                className="w-full border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent font-sans"
+                placeholder="Tell us about yourself, your academic interests, and career goals..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                Address
+              </label>
+              <input
+                data-testid="profile-address-input"
+                type="text"
+                value={profile.address || ''}
+                onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                className="w-full border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors placeholder:text-slate-400 font-sans"
+                placeholder="123 University Ave, City, State, ZIP"
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm mb-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-serif text-2xl font-bold text-slate-900">Education</h2>
+            <button
+              data-testid="add-education-button"
+              onClick={addEducation}
+              className="flex items-center rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all px-4 py-2 text-sm font-medium"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Education
+            </button>
+          </div>
+
+          {profile.education.length === 0 ? (
+            <p className="text-slate-600 font-sans text-center py-6">No education added yet</p>
+          ) : (
+            <div className="space-y-6">
+              {profile.education.map((edu, index) => (
+                <div key={index} className="border border-slate-200 rounded-lg p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="font-sans font-semibold text-slate-900">Education {index + 1}</h3>
+                    <button
+                      data-testid={`remove-education-button-${index}`}
+                      onClick={() => removeEducation(index)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                        Institution
+                      </label>
+                      <input
+                        data-testid={`education-institution-${index}`}
+                        type="text"
+                        value={edu.institution}
+                        onChange={(e) => updateEducation(index, 'institution', e.target.value)}
+                        className="w-full border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors font-sans"
+                        placeholder="University name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                        Degree
+                      </label>
+                      <input
+                        data-testid={`education-degree-${index}`}
+                        type="text"
+                        value={edu.degree}
+                        onChange={(e) => updateEducation(index, 'degree', e.target.value)}
+                        className="w-full border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors font-sans"
+                        placeholder="Bachelor's, Master's, PhD"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                        Field of Study
+                      </label>
+                      <input
+                        data-testid={`education-field-${index}`}
+                        type="text"
+                        value={edu.field}
+                        onChange={(e) => updateEducation(index, 'field', e.target.value)}
+                        className="w-full border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors font-sans"
+                        placeholder="Computer Science"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                        GPA (Optional)
+                      </label>
+                      <input
+                        data-testid={`education-gpa-${index}`}
+                        type="text"
+                        value={edu.gpa || ''}
+                        onChange={(e) => updateEducation(index, 'gpa', e.target.value)}
+                        className="w-full border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors font-sans"
+                        placeholder="3.8/4.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        data-testid={`education-start-${index}`}
+                        type="month"
+                        value={edu.start_date}
+                        onChange={(e) => updateEducation(index, 'start_date', e.target.value)}
+                        className="w-full border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                        End Date (Optional)
+                      </label>
+                      <input
+                        data-testid={`education-end-${index}`}
+                        type="month"
+                        value={edu.end_date || ''}
+                        onChange={(e) => updateEducation(index, 'end_date', e.target.value)}
+                        className="w-full border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors font-sans"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm mb-6"
+        >
+          <h2 className="font-serif text-2xl font-bold text-slate-900 mb-6">Skills</h2>
+
+          <div className="flex gap-2 mb-4">
+            <input
+              data-testid="skill-input"
+              type="text"
+              value={newSkill}
+              onChange={(e) => setNewSkill(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+              className="flex-1 border-b-2 border-slate-200 bg-transparent py-2 focus:border-slate-900 focus:outline-none transition-colors placeholder:text-slate-400 font-sans"
+              placeholder="Add a skill (e.g., Python, Data Analysis, Leadership)"
+            />
+            <button
+              data-testid="add-skill-button"
+              onClick={addSkill}
+              className="rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all px-6 py-2 font-medium"
+            >
+              Add
+            </button>
+          </div>
+
+          {profile.skills.length === 0 ? (
+            <p className="text-slate-600 font-sans text-center py-6">No skills added yet</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {profile.skills.map((skill, index) => (
+                <div
+                  key={index}
+                  className="inline-flex items-center bg-slate-100 text-slate-900 rounded-full px-4 py-2 font-sans"
+                  data-testid={`skill-tag-${index}`}
+                >
+                  {skill}
+                  <button
+                    data-testid={`remove-skill-button-${index}`}
+                    onClick={() => removeSkill(index)}
+                    className="ml-2 text-slate-600 hover:text-slate-900"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+
+        <button
+          data-testid="save-profile-button"
+          onClick={handleSaveProfile}
+          disabled={saving}
+          className="w-full rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl px-8 py-3 font-medium disabled:opacity-50"
+        >
+          <Save className="w-5 h-5 inline mr-2" />
+          {saving ? 'Saving...' : 'Save Profile'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

@@ -1,0 +1,280 @@
+/app/frontend/src/pages/ResumeBuilder.js                                                                    import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Download, FileText } from 'lucide-react';
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const styles = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontFamily: 'Helvetica',
+    backgroundColor: '#ffffff',
+  },
+  header: {
+    marginBottom: 20,
+    borderBottom: '2 solid #0f172a',
+    paddingBottom: 10,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginBottom: 5,
+  },
+  contactInfo: {
+    fontSize: 10,
+    color: '#475569',
+    marginTop: 5,
+  },
+  section: {
+    marginTop: 15,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  text: {
+    fontSize: 11,
+    color: '#334155',
+    marginBottom: 5,
+    lineHeight: 1.5,
+  },
+  educationItem: {
+    marginBottom: 10,
+  },
+  institution: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0f172a',
+  },
+  degree: {
+    fontSize: 10,
+    color: '#475569',
+    marginTop: 2,
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  skill: {
+    fontSize: 10,
+    color: '#334155',
+    backgroundColor: '#f1f5f9',
+    padding: '4 8',
+    borderRadius: 4,
+    marginBottom: 5,
+  },
+});
+
+const ResumePDF = ({ user, profile }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.header}>
+        <Text style={styles.name}>{user?.name || 'Your Name'}</Text>
+        <Text style={styles.contactInfo}>{user?.email}</Text>
+        {user?.phone && <Text style={styles.contactInfo}>{user.phone}</Text>}
+        {profile?.address && <Text style={styles.contactInfo}>{profile.address}</Text>}
+      </View>
+
+      {profile?.bio && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Professional Summary</Text>
+          <Text style={styles.text}>{profile.bio}</Text>
+        </View>
+      )}
+
+      {profile?.education && profile.education.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Education</Text>
+          {profile.education.map((edu, index) => (
+            <View key={index} style={styles.educationItem}>
+              <Text style={styles.institution}>{edu.institution}</Text>
+              <Text style={styles.degree}>
+                {edu.degree} in {edu.field}
+              </Text>
+              <Text style={styles.degree}>
+                {edu.start_date} - {edu.end_date || 'Present'}
+                {edu.gpa && ` | GPA: ${edu.gpa}`}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {profile?.skills && profile.skills.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Skills</Text>
+          <View style={styles.skillsContainer}>
+            {profile.skills.map((skill, index) => (
+              <Text key={index} style={styles.skill}>
+                {skill}
+              </Text>
+            ))}
+          </View>
+        </View>
+      )}
+    </Page>
+  </Document>
+);
+
+const ResumeBuilder = () => {
+  const { getAuthHeader, user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axios.get(`${API}/profile`, {
+        headers: getAuthHeader()
+      });
+      setProfile(response.data);
+    } catch (error) {
+      toast.error('Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-slate-600 font-sans">Loading resume builder...</div>
+      </div>
+    );
+  }
+
+  const hasProfileData = profile && (
+    profile.bio ||
+    (profile.education && profile.education.length > 0) ||
+    (profile.skills && profile.skills.length > 0)
+  );
+
+  return (
+    <div className="min-h-screen bg-stone-50 p-6 md:p-12">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-slate-900 mb-2">
+            Resume Builder
+          </h1>
+          <p className="text-slate-600 font-sans text-lg">Generate a professional resume from your profile</p>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm"
+        >
+          {!hasProfileData ? (
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="font-serif text-xl font-bold text-slate-900 mb-2">Complete Your Profile First</h3>
+              <p className="text-slate-600 font-sans mb-6">
+                Add your education, skills, and bio to generate a professional resume
+              </p>
+              <a
+                href="/profile"
+                className="inline-block rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl px-8 py-3 font-medium"
+              >
+                Go to Profile
+              </a>
+            </div>
+          ) : (
+            <div>
+              <div className="mb-8">
+                <h2 className="font-serif text-2xl font-bold text-slate-900 mb-4">Resume Preview</h2>
+                <div className="bg-stone-50 border border-slate-200 rounded-lg p-8">
+                  <div className="border-b-2 border-slate-900 pb-4 mb-6">
+                    <h3 className="font-serif text-2xl font-bold text-slate-900">{user?.name}</h3>
+                    <p className="text-slate-600 font-sans text-sm mt-2">{user?.email}</p>
+                    {user?.phone && <p className="text-slate-600 font-sans text-sm">{user.phone}</p>}
+                    {profile?.address && <p className="text-slate-600 font-sans text-sm">{profile.address}</p>}
+                  </div>
+
+                  {profile?.bio && (
+                    <div className="mb-6">
+                      <h4 className="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">
+                        Professional Summary
+                      </h4>
+                      <p className="text-slate-700 font-sans text-sm leading-relaxed">{profile.bio}</p>
+                    </div>
+                  )}
+
+                  {profile?.education && profile.education.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-3">
+                        Education
+                      </h4>
+                      {profile.education.map((edu, index) => (
+                        <div key={index} className="mb-4">
+                          <p className="font-sans font-semibold text-slate-900">{edu.institution}</p>
+                          <p className="text-slate-600 font-sans text-sm">
+                            {edu.degree} in {edu.field}
+                          </p>
+                          <p className="text-slate-600 font-sans text-sm">
+                            {edu.start_date} - {edu.end_date || 'Present'}
+                            {edu.gpa && ` | GPA: ${edu.gpa}`}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {profile?.skills && profile.skills.length > 0 && (
+                    <div>
+                      <h4 className="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-3">
+                        Skills
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.skills.map((skill, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center bg-slate-100 text-slate-900 rounded-full px-3 py-1 font-sans text-sm"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <PDFDownloadLink
+                document={<ResumePDF user={user} profile={profile} />}
+                fileName={`${user?.name?.replace(/\s+/g, '_')}_Resume.pdf`}
+                className="w-full block"
+              >
+                {({ loading: pdfLoading }) => (
+                  <button
+                    data-testid="download-resume-button"
+                    disabled={pdfLoading}
+                    className="w-full rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl px-8 py-3 font-medium disabled:opacity-50"
+                  >
+                    <Download className="w-5 h-5 inline mr-2" />
+                    {pdfLoading ? 'Generating PDF...' : 'Download Resume PDF'}
+                  </button>
+                )}
+              </PDFDownloadLink>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default ResumeBuilder;

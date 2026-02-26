@@ -1,0 +1,179 @@
+/app/frontend/src/pages/Opportunities.js                                                                             import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { Award, Briefcase, Search, MapPin, Calendar, DollarSign } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const Opportunities = () => {
+  const [postings, setPostings] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchPostings();
+  }, []);
+
+  const fetchPostings = async () => {
+    try {
+      const response = await axios.get(`${API}/postings`);
+      setPostings(response.data);
+    } catch (error) {
+      console.error('Failed to load postings', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPostings = postings.filter((posting) => {
+    const matchesFilter = filter === 'all' || posting.type === filter;
+    const matchesSearch = posting.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         posting.organization.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-slate-600 font-sans">Loading opportunities...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-stone-50 p-6 md:p-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-slate-900 mb-2">
+            Opportunities
+          </h1>
+          <p className="text-slate-600 font-sans text-lg">Discover scholarships and internships worldwide</p>
+        </div>
+
+        <div className="mb-8 flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              data-testid="search-opportunities-input"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title or organization..."
+              className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent font-sans"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              data-testid="filter-all-button"
+              onClick={() => setFilter('all')}
+              className={`rounded-full px-6 py-3 font-medium transition-all ${
+                filter === 'all'
+                  ? 'bg-slate-900 text-white shadow-lg'
+                  : 'border border-slate-200 bg-white text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              All
+            </button>
+            <button
+              data-testid="filter-scholarship-button"
+              onClick={() => setFilter('scholarship')}
+              className={`rounded-full px-6 py-3 font-medium transition-all ${
+                filter === 'scholarship'
+                  ? 'bg-slate-900 text-white shadow-lg'
+                  : 'border border-slate-200 bg-white text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <Award className="w-4 h-4 inline mr-1" />
+              Scholarships
+            </button>
+            <button
+              data-testid="filter-internship-button"
+              onClick={() => setFilter('internship')}
+              className={`rounded-full px-6 py-3 font-medium transition-all ${
+                filter === 'internship'
+                  ? 'bg-slate-900 text-white shadow-lg'
+                  : 'border border-slate-200 bg-white text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <Briefcase className="w-4 h-4 inline mr-1" />
+              Internships
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPostings.map((posting, index) => (
+            <motion.div
+              key={posting.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => navigate(`/opportunity/${posting.id}`)}
+              className="bg-white border border-slate-200 rounded-xl p-6 hover:border-slate-300 transition-all shadow-sm hover:shadow-md cursor-pointer"
+              data-testid={`opportunity-card-${index}`}
+            >
+              <div className="flex items-start justify-between mb-4">
+                {posting.type === 'scholarship' ? (
+                  <Award className="w-8 h-8 text-amber-700" />
+                ) : (
+                  <Briefcase className="w-8 h-8 text-green-700" />
+                )}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  posting.type === 'scholarship' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
+                }`}>
+                  {posting.type === 'scholarship' ? 'Scholarship' : 'Internship'}
+                </span>
+              </div>
+
+              <h3 className="font-serif text-xl font-bold text-slate-900 mb-2 line-clamp-2">
+                {posting.title}
+              </h3>
+              <p className="text-slate-600 font-sans text-sm mb-4">{posting.organization}</p>
+
+              <div className="space-y-2 text-sm mb-4">
+                {posting.location && (
+                  <div className="flex items-center text-slate-600">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span className="font-sans">{posting.location}</span>
+                  </div>
+                )}
+                {posting.amount && (
+                  <div className="flex items-center text-slate-600">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    <span className="font-sans">{posting.amount}</span>
+                  </div>
+                )}
+                <div className="flex items-center text-slate-600">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <span className="font-sans">
+                    Deadline: {new Date(posting.deadline).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-slate-600 font-sans text-sm line-clamp-3">
+                {posting.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {filteredPostings.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-slate-600 font-sans">No opportunities found matching your criteria.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Opportunities;

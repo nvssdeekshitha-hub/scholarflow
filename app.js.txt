@@ -1,0 +1,121 @@
+/app/frontend/src/App.js
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Toaster } from './components/ui/sonner';
+import Layout from './components/Layout';
+import AuthPage from './pages/AuthPage';
+import Dashboard from './pages/Dashboard';
+import Opportunities from './pages/Opportunities';
+import OpportunityDetail from './pages/OpportunityDetail';
+import Profile from './pages/Profile';
+import ResumeBuilder from './pages/ResumeBuilder';
+import '@/App.css';
+
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-slate-600 font-sans">Loading...</div>
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/auth" />;
+};
+
+const PublicRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-slate-600 font-sans">Loading...</div>
+      </div>
+    );
+  }
+
+  return user ? <Navigate to="/dashboard" /> : children;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route
+        path="/auth"
+        element={
+          <PublicRoute>
+            <AuthPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/opportunities"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Opportunities />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/opportunity/:id"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <OpportunityDetail />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Profile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/resume"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ResumeBuilder />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Route path="*" element={<Navigate to="/dashboard" />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+        <Toaster position="top-right" />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+export default App;

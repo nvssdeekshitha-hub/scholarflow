@@ -1,0 +1,271 @@
+/app/frontend/src/pages/OpportunityDetail.js                                                              import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
+import { Award, Briefcase, MapPin, Calendar, DollarSign, CheckCircle, Upload, ArrowLeft } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const OpportunityDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { getAuthHeader } = useAuth();
+  const [posting, setPosting] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [sopFile, setSopFile] = useState(null);
+  const [recommendationFile, setRecommendationFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [sopUrl, setSopUrl] = useState('');
+  const [recommendationUrl, setRecommendationUrl] = useState('');
+
+  useEffect(() => {
+    fetchPosting();
+  }, [id]);
+
+  const fetchPosting = async () => {
+    try {
+      const response = await axios.get(`${API}/postings/${id}`);
+      setPosting(response.data);
+    } catch (error) {
+      toast.error('Failed to load opportunity');
+      navigate('/opportunities');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const uploadToCloudinary = async (file, fileType) => {
+    try {
+      const sigResponse = await axios.get(`${API}/cloudinary/signature?resource_type=auto&folder=scholarflow/documents`, {
+        headers: getAuthHeader()
+      });
+      const { signature, timestamp, cloud_name, api_key, folder } = sigResponse.data;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', api_key);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+      formData.append('folder', folder);
+
+      const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await uploadResponse.json();
+      return result.secure_url;
+    } catch (error) {
+      throw new Error(`Failed to upload ${fileType}`);
+    }
+  };
+
+  const handleSubmitApplication = async () => {
+    if (!sopFile) {
+      toast.error('Please upload your Statement of Purpose');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const sopUploadUrl = await uploadToCloudinary(sopFile, 'SOP');
+      setSopUrl(sopUploadUrl);
+
+      let recUploadUrl = null;
+      if (recommendationFile) {
+        recUploadUrl = await uploadToCloudinary(recommendationFile, 'Recommendation Letter');
+        setRecommendationUrl(recUploadUrl);
+      }
+
+      await axios.post(
+        `${API}/apply/${id}`,
+        {
+          sop_url: sopUploadUrl,
+          recommendation_url: recUploadUrl
+        },
+        { headers: getAuthHeader() }
+      );
+
+      toast.success('Application submitted successfully!');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to submit application');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-slate-600 font-sans">Loading opportunity...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-stone-50 p-6 md:p-12">
+      <div className="max-w-4xl mx-auto">
+        <button
+          data-testid="back-button"
+          onClick={() => navigate('/opportunities')}
+          className="flex items-center text-slate-600 hover:text-slate-900 transition-colors mb-6 font-sans"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Opportunities
+        </button>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm mb-6"
+        >
+          <div className="flex items-start justify-between mb-6">
+            {posting.type === 'scholarship' ? (
+              <Award className="w-12 h-12 text-amber-700" />
+            ) : (
+              <Briefcase className="w-12 h-12 text-green-700" />
+            )}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              posting.type === 'scholarship' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
+            }`}>
+              {posting.type === 'scholarship' ? 'Scholarship' : 'Internship'}
+            </span>
+          </div>
+
+          <h1 className="font-serif text-4xl font-bold text-slate-900 mb-3">
+            {posting.title}
+          </h1>
+          <p className="text-slate-600 font-sans text-lg mb-6">{posting.organization}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {posting.location && (
+              <div className="flex items-center text-slate-600">
+                <MapPin className="w-5 h-5 mr-2" />
+                <span className="font-sans">{posting.location}</span>
+              </div>
+            )}
+            {posting.amount && (
+              <div className="flex items-center text-slate-600">
+                <DollarSign className="w-5 h-5 mr-2" />
+                <span className="font-sans">{posting.amount}</span>
+              </div>
+            )}
+            <div className="flex items-center text-slate-600">
+              <Calendar className="w-5 h-5 mr-2" />
+              <span className="font-sans">
+                {new Date(posting.deadline).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </span>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="font-serif text-2xl font-bold text-slate-900 mb-4">About</h2>
+            <p className="text-slate-600 font-sans leading-relaxed">{posting.description}</p>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="font-serif text-2xl font-bold text-slate-900 mb-4">Requirements</h2>
+            <ul className="space-y-2">
+              {posting.requirements.map((req, index) => (
+                <li key={index} className="flex items-start text-slate-600 font-sans">
+                  <CheckCircle className="w-5 h-5 mr-2 text-green-700 flex-shrink-0 mt-0.5" />
+                  {req}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {!showApplicationForm ? (
+            <button
+              data-testid="apply-now-button"
+              onClick={() => setShowApplicationForm(true)}
+              className="w-full rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl px-8 py-3 font-medium"
+            >
+              Apply Now
+            </button>
+          ) : (
+            <div className="border-t border-slate-200 pt-8 mt-8">
+              <h2 className="font-serif text-2xl font-bold text-slate-900 mb-6">Submit Application</h2>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-3">
+                    Statement of Purpose (Required)
+                  </label>
+                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 hover:border-slate-300 transition-colors">
+                    <input
+                      data-testid="sop-upload-input"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setSopFile(e.target.files[0])}
+                      className="hidden"
+                      id="sop-upload"
+                    />
+                    <label htmlFor="sop-upload" className="cursor-pointer flex flex-col items-center">
+                      <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                      <span className="text-slate-600 font-sans text-sm">
+                        {sopFile ? sopFile.name : 'Click to upload PDF or DOC'}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-3">
+                    Letter of Recommendation (Optional)
+                  </label>
+                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 hover:border-slate-300 transition-colors">
+                    <input
+                      data-testid="recommendation-upload-input"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setRecommendationFile(e.target.files[0])}
+                      className="hidden"
+                      id="rec-upload"
+                    />
+                    <label htmlFor="rec-upload" className="cursor-pointer flex flex-col items-center">
+                      <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                      <span className="text-slate-600 font-sans text-sm">
+                        {recommendationFile ? recommendationFile.name : 'Click to upload PDF or DOC'}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    data-testid="submit-application-button"
+                    onClick={handleSubmitApplication}
+                    disabled={uploading || !sopFile}
+                    className="flex-1 rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl px-8 py-3 font-medium disabled:opacity-50"
+                  >
+                    {uploading ? 'Submitting...' : 'Submit Application'}
+                  </button>
+                  <button
+                    data-testid="cancel-application-button"
+                    onClick={() => setShowApplicationForm(false)}
+                    className="rounded-full border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 transition-all px-8 py-3 font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default OpportunityDetail;

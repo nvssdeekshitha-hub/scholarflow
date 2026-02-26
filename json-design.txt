@@ -1,0 +1,151 @@
+/app/design_guidelines.json                                                                                                     {
+  "design_system": {
+    "identity": {
+      "name": "ScholarFlow",
+      "tone": "Academic, Prestigious, Trustworthy, Modern",
+      "persona": "E1: The Anti-AI Designer",
+      "principles": [
+        "Fusion over Imitation: Ivy League Aesthetics x Modern SaaS Functionality",
+        "Content is King: Data and text legibility first",
+        "Negative Space: Generous padding (2x standard)",
+        "No Generic Gradients: Use solid, rich colors or subtle grain",
+        "Asymmetry: Use Bento grids to break visual monotony"
+      ]
+    },
+    "theme": {
+      "mode": "light",
+      "strategy": "Paper & Ink",
+      "background": {
+        "default": "bg-stone-50",
+        "paper": "bg-white",
+        "subtle": "bg-stone-100"
+      },
+      "colors": {
+        "primary": {
+          "name": "Oxford Blue",
+          "hex": "#0f172a",
+          "tailwind": "bg-slate-900 text-white"
+        },
+        "secondary": {
+          "name": "Bronze Gold",
+          "hex": "#b45309",
+          "tailwind": "text-amber-700 bg-amber-50"
+        },
+        "accent": {
+          "name": "Sage Green",
+          "hex": "#15803d",
+          "tailwind": "text-green-700 bg-green-50"
+        },
+        "text": {
+          "primary": "text-slate-900",
+          "secondary": "text-slate-600",
+          "muted": "text-slate-400"
+        },
+        "forbidden": [
+          "Teal (#1B93A4)",
+          "Purple Gradients",
+          "Neon Green"
+        ]
+      }
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Merriweather, serif",
+        "body": "Manrope, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "imports": [
+        "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300&family=JetBrains+Mono:wght@400;500&display=swap"
+      ],
+      "rules": {
+        "headings": "font-serif tracking-tight font-bold text-slate-900",
+        "subheadings": "font-sans uppercase tracking-widest text-xs font-semibold text-slate-500",
+        "body": "font-sans leading-relaxed text-slate-600"
+      }
+    },
+    "spacing": {
+      "scale": "2x standard",
+      "container_padding": "p-6 md:p-12",
+      "section_gap": "gap-8 md:gap-16",
+      "element_gap": "gap-4"
+    },
+    "layout_strategies": {
+      "dashboard": {
+        "type": "Bento Grid",
+        "grid_cols": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4",
+        "gap": "gap-4 md:gap-6",
+        "rules": [
+          "Summary cards: col-span-1",
+          "Main chart/list: col-span-2 or col-span-3",
+          "Profile sidebar: col-span-1 row-span-2"
+        ]
+      },
+      "marketing": {
+        "type": "Asymmetrical Tetris",
+        "grid_cols": "grid-cols-12",
+        "gap": "gap-8"
+      }
+    },
+    "components": {
+      "button": {
+        "style": "pill",
+        "classes": {
+          "primary": "rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl px-8 py-3 font-medium",
+          "secondary": "rounded-full border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 transition-all px-8 py-3 font-medium",
+          "ghost": "rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all px-6 py-2"
+        }
+      },
+      "card": {
+        "style": "outlined",
+        "classes": "bg-white border border-slate-200 rounded-xl p-6 hover:border-slate-300 transition-colors shadow-sm"
+      },
+      "input": {
+        "style": "minimal",
+        "classes": "border-b-2 border-slate-200 bg-transparent px-0 py-2 focus:border-slate-900 focus:outline-none transition-colors placeholder:text-slate-400"
+      },
+      "status_badge": {
+        "style": "soft-pill",
+        "classes": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+        "variants": {
+          "pending": "bg-yellow-100 text-yellow-800",
+          "reviewed": "bg-blue-100 text-blue-800",
+          "shortlisted": "bg-purple-100 text-purple-800",
+          "accepted": "bg-green-100 text-green-800",
+          "rejected": "bg-red-100 text-red-800"
+        }
+      }
+    },
+    "motion": {
+      "library": "framer-motion",
+      "transitions": {
+        "default": { "duration": 0.3, "ease": "easeOut" },
+        "stagger": { "staggerChildren": 0.1 }
+      },
+      "prefers_reduced_motion": true
+    },
+    "assets": {
+      "images": {
+        "hero_student": "https://images.unsplash.com/photo-1719245309441-c577e0d1959d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwxfHx1bml2ZXJzaXR5JTIwc3R1ZGVudCUyMHN0dWR5JTIwbGlicmFyeSUyMGNhbXB1cyUyMGdyYWR1YXRpb258ZW58MHx8fHwxNzcyMDgxNjY1fDA&ixlib=rb-4.1.0&q=85",
+        "library_study": "https://images.unsplash.com/photo-1719245309410-ec0098f4281d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwyfHx1bml2ZXJzaXR5JTIwc3R1ZGVudCUyMHN0dWR5JTIwbGlicmFyeSUyMGNhbXB1cyUyMGdyYWR1YXRpb258ZW58MHx8fHwxNzcyMDgxNjY1fDA&ixlib=rb-4.1.0&q=85",
+        "graduation": "https://images.unsplash.com/photo-1719245307966-1d0b89921af4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHw0fHx1bml2ZXJzaXR5JTIwc3R1ZGVudCUyMHN0dWR5JTIwbGlicmFyeSUyMGNhbXB1cyUyMGdyYWR1YXRpb258ZW58MHx8fHwxNzcyMDgxNjY1fDA&ixlib=rb-4.1.0&q=85",
+        "logo_placeholder": "https://via.placeholder.com/150x50?text=ScholarFlow"
+      },
+      "icons": {
+        "library": "lucide-react",
+        "preferred_set": ["BookOpen", "GraduationCap", "Award", "Briefcase", "User", "FileText", "CheckCircle", "Clock"]
+      }
+    },
+    "accessibility": {
+      "contrast": "WCAG AA minimum (4.5:1)",
+      "interactive_focus": "focus:ring-2 focus:ring-slate-900 focus:ring-offset-2",
+      "test_ids": "Required for all interactive elements (e.g., data-testid='submit-application-btn')"
+    },
+    "universal_guidelines": [
+      "DO NOT use generic gradients.",
+      "DO NOT use center alignment for long text.",
+      "ALWAYS use 'Manrope' for body and 'Merriweather' for headings.",
+      "Use 'sonner' for toast notifications.",
+      "Use 'lucide-react' for icons.",
+      "Input fields should look like lines or minimal boxes, not heavy blocks.",
+      "Dashboard cards should have a 'paper' feel (white bg, subtle border, no heavy shadow)."
+    ]
